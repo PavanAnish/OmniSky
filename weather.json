@@ -1,0 +1,331 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Location :{{ $json.name}}\nWeather:{{ $json.weather[0].main }}{{ $json.weather[0].description }}\ntemp:{{ $json.main.temp }},{{ $json.main.feels_like }}\nmax and min temp:{{ $json.main.temp_min }}{{ $json.main.temp_max }}\npressure:{{ $json.main.pressure }}\nhumidity:{{ $json.main.humidity }}\nvisibility:{{ $json.visibility }}\nwind speed:{{ $json.wind.speed }},deg:{{ $json.wind.deg }}\nsunrise:{{ $json.sys.sunrise }}\nsunset:{{ $json.sys.sunset }}\n\ngenerate a beautiful text showcasing the weather neatly",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        608,
+        -64
+      ],
+      "id": "82350595-8edc-4c02-97cf-d6fb8c6be8da",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        48
+      ],
+      "id": "563465d4-1022-4b06-b5a9-77bb0fd16360",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NBZkGvWAYDG6dBdx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "5DayForecast",
+        "cityName": "={{ $json.query.city }}"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "efce773d-1bc7-4ef8-91b4-2ddff6e9ac55",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "S1pMcZ8UkoeBVV83",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a4d01c39-64f4-45c4-b380-05b45577ea31",
+              "leftValue": "={{ $json.query.city }}",
+              "rightValue": "today",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        48
+      ],
+      "id": "f1f6fc53-76a8-41f6-856f-0819f2af7131",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ae2f6e4-7821-4bd7-a8b8-afda0002edcc",
+              "name": "Cityname",
+              "value": "=\n{{ $('Webhook').item.json.query.city.replace('today', '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        -48
+      ],
+      "id": "18c62dc9-877a-4b16-85a4-b0ac4d48f3a6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $json.Cityname }}"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -112
+      ],
+      "id": "7dc78fad-1e4e-47bf-a9bd-293c5e85481c",
+      "name": "Today",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "S1pMcZ8UkoeBVV83",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Location :{{ $('Webhook').item.json.query.city }}\nWeather:\ntemp:{{ $json.list[5].main.temp }},{{ $json.list[5].main.feels_like }}\nmax and min temp:{{ $json.list[0].main.temp_min }}{{ $json.list[0].main.temp_max }}\npressure:{{ $json.list[5].main.pressure }}\nhumidity:{{ $json.list[5].main.humidity }}\nvisibility:{{ $json.list[5].visibility }}\nwind speed:{{ $json.list[5].wind.speed }},deg:{{ $json.list[5].wind.deg }}\nsunrise:{{ $json.city.sunrise }}\nsunset:{{ $json.city.sunset }}\n\ngenerate a beautiful text showcasing the weather neatly and give a title \"\"{{ $('Webhook').item.json.query.city }} after 5 days\"",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        336,
+        208
+      ],
+      "id": "ac921a79-b9cc-450e-ba1c-fec1dfb68f25",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        368
+      ],
+      "id": "ad0662ac-bfb5-4172-b5f8-7f3ff8e770d7",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NBZkGvWAYDG6dBdx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -432,
+        80
+      ],
+      "id": "34217889-c634-4eb7-878b-e199e02c9eb7",
+      "name": "Webhook",
+      "webhookId": "77d72b8e-eecc-4fa6-b281-bfacfe0cd56d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        912,
+        240
+      ],
+      "id": "fd34adf2-55c9-48a9-a807-dcdf0d99288e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        -32
+      ],
+      "id": "12318f23-dbdf-4279-af52-dbce59fbb69e",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a0ec9c88-a8c5-4bf1-b7ae-c3688e737acb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "69412988f4951e61ebda3abda3e6d7c51139e65f602621a14e71d439b746a22e"
+  },
+  "id": "mgMuz7IZc3VQH6Gc_P43P",
+  "tags": []
+}
