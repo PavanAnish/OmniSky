@@ -1,6 +1,6 @@
 ﻿# OmniSky 🔮
 
-**OmniSky** is a futuristic, AI-powered weather prediction application that combines a stunning glassmorphism design with advanced machine learning models to deliver hyper-accurate weather forecasts. Say goodbye to boring weather apps — OmniSky brings the future of weather prediction to your fingertips.
+**OmniSky** is a futuristic, AI-powered weather prediction application that combines a stunning glassmorphism design with advanced machine learning models to deliver hyper-accurate weather forecasts.OmniSky brings  weather prediction to your fingertips.
 
 ## ✨ Features
 
