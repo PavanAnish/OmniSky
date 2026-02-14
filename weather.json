@@ -18,25 +18,6 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        464,
-        48
-      ],
-      "id": "563465d4-1022-4b06-b5a9-77bb0fd16360",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "NBZkGvWAYDG6dBdx",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "operation": "5DayForecast",
         "cityName": "={{ $json.query.city }}"
       },
@@ -133,7 +114,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Location :{{ $('Webhook').item.json.query.city }}\nWeather:\ntemp:{{ $json.list[5].main.temp }},{{ $json.list[5].main.feels_like }}\nmax and min temp:{{ $json.list[0].main.temp_min }}{{ $json.list[0].main.temp_max }}\npressure:{{ $json.list[5].main.pressure }}\nhumidity:{{ $json.list[5].main.humidity }}\nvisibility:{{ $json.list[5].visibility }}\nwind speed:{{ $json.list[5].wind.speed }},deg:{{ $json.list[5].wind.deg }}\nsunrise:{{ $json.city.sunrise }}\nsunset:{{ $json.city.sunset }}\n\ngenerate a beautiful text showcasing the weather neatly and give a title \"\"{{ $('Webhook').item.json.query.city }} after 5 days\"",
+        "text": "=Location: {{ $('Webhook').item.json.query.city }}\n\n📅 Day 1:\nWeather: {{ $json.list[0].weather[0].main }} - {{ $json.list[0].weather[0].description }}\nTemp: {{ $json.list[0].main.temp }}°C (Feels like {{ $json.list[0].main.feels_like }}°C)\nMin/Max: {{ $json.list[0].main.temp_min }}°C / {{ $json.list[0].main.temp_max }}°C\nHumidity: {{ $json.list[0].main.humidity }}% | Wind: {{ $json.list[0].wind.speed }} m/s\n\n📅 Day 2:\nWeather: {{ $json.list[8].weather[0].main }} - {{ $json.list[8].weather[0].description }}\nTemp: {{ $json.list[8].main.temp }}°C (Feels like {{ $json.list[8].main.feels_like }}°C)\nMin/Max: {{ $json.list[8].main.temp_min }}°C / {{ $json.list[8].main.temp_max }}°C\nHumidity: {{ $json.list[8].main.humidity }}% | Wind: {{ $json.list[8].wind.speed }} m/s\n\n📅 Day 3:\nWeather: {{ $json.list[16].weather[0].main }} - {{ $json.list[16].weather[0].description }}\nTemp: {{ $json.list[16].main.temp }}°C (Feels like {{ $json.list[16].main.feels_like }}°C)\nMin/Max: {{ $json.list[16].main.temp_min }}°C / {{ $json.list[16].main.temp_max }}°C\nHumidity: {{ $json.list[16].main.humidity }}% | Wind: {{ $json.list[16].wind.speed }} m/s\n\n📅 Day 4:\nWeather: {{ $json.list[24].weather[0].main }} - {{ $json.list[24].weather[0].description }}\nTemp: {{ $json.list[24].main.temp }}°C (Feels like {{ $json.list[24].main.feels_like }}°C)\nMin/Max: {{ $json.list[24].main.temp_min }}°C / {{ $json.list[24].main.temp_max }}°C\nHumidity: {{ $json.list[24].main.humidity }}% | Wind: {{ $json.list[24].wind.speed }} m/s\n\n📅 Day 5:\nWeather: {{ $json.list[32].weather[0].main }} - {{ $json.list[32].weather[0].description }}\nTemp: {{ $json.list[32].main.temp }}°C (Feels like {{ $json.list[32].main.feels_like }}°C)\nMin/Max: {{ $json.list[32].main.temp_min }}°C / {{ $json.list[32].main.temp_max }}°C\nHumidity: {{ $json.list[32].main.humidity }}% | Wind: {{ $json.list[32].wind.speed }} m/s\n\n🌅 Sunrise: {{ $json.city.sunrise }}\n🌇 Sunset: {{ $json.city.sunset }}\n\nGenerate a beautiful, well-formatted 5-day weather forecast summary. Include a title with the city name. For each day, describe the weather conditions in a friendly, readable way. Add outfit/activity suggestions where relevant. Also, based on the 5-day weather trend data above, predict the likely weather for Days 6–10. Analyze patterns in temperature changes, humidity shifts, and wind direction to make reasonable predictions. Clearly label these as \"AI Predictions\" and add a disclaimer that they are trend-based estimates, not official forecasts.\n\nFormat the predictions the same way as the 5-day data — day by day with expected conditions, temperature range, and confidence level (High/Medium/Low).\n",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -147,25 +128,7 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        256,
-        368
-      ],
-      "id": "ad0662ac-bfb5-4172-b5f8-7f3ff8e770d7",
-      "name": "Google Gemini Chat Model1",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "NBZkGvWAYDG6dBdx",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
+        "path": "77d72b8e-eecc-4fa6-b281-bfacfe0cd56d",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -199,26 +162,55 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1024,
-        -32
+        1008,
+        16
       ],
       "id": "12318f23-dbdf-4279-af52-dbce59fbb69e",
       "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-safeguard-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        496,
+        64
+      ],
+      "id": "72169b0a-751c-4593-9c31-51d0351fc803",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "HxHGtIbfW5vFpQg2",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-safeguard-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        272,
+        416
+      ],
+      "id": "b851b853-7199-409a-ae24-4d681f59a23b",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "HxHGtIbfW5vFpQg2",
+          "name": "Groq account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "OpenWeatherMap": {
       "main": [
         [
@@ -281,17 +273,6 @@
         ]
       ]
     },
-    "Google Gemini Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook": {
       "main": [
         [
@@ -313,15 +294,37 @@
           }
         ]
       ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "a0ec9c88-a8c5-4bf1-b7ae-c3688e737acb",
+  "versionId": "ab70ca8d-a242-4db1-95f4-7bc477490c4b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "69412988f4951e61ebda3abda3e6d7c51139e65f602621a14e71d439b746a22e"
