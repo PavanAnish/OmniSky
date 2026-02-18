@@ -149,8 +149,9 @@ Thanks to the team for making this project possible!
 
 <div align="center">
 
-<a href="https://github.com/PavanAnish/N8Neather/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=PavanAnish/N8Neather" />
+<a href="https://github.com/PavanAnish/OmniSky/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=PavanAnish/OmniSky" />
 </a>
+
 
 </div>
