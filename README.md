@@ -40,24 +40,6 @@ Built with a focus on aesthetics and user experience, OmniSky features a modern 
 
 The system uses a decoupled architecture where the frontend serves as a display layer for intelligent backend processing.
 
-```mermaid
-graph LR
-    User[User] -->|Search City| Frontend[Frontend App]
-    Frontend -->|HTTP GET| Webhook[n8n Webhook]
-    Webhook -->|Route| Condition{Is 'Today'?}
-    
-    Condition -- Yes --> Current[OpenWeatherMap Current]
-    Condition -- No --> Forecast[OpenWeatherMap 5-Day]
-    
-    Current --> AI_Today[Groq LLM Agent\n(Summarizer)]
-    Forecast --> AI_Future[Groq LLM Agent\n(Predictor)]
-    
-    AI_Today --> Response[JSON Response]
-    AI_Future --> Response
-    
-    Response -->|Display| Frontend
-```
-
 ### How It Works
 
 1.  **Input:** User searches for a city.
@@ -147,14 +129,13 @@ N8Neather/
 
 Thanks to the team for making this project possible!
 
-<div align="center">
-
 <a href="https://github.com/PavanAnish/OmniSky/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=PavanAnish/OmniSky" />
 </a>
 
 
-</div>## 🌐 Live Demo
+</div>
+## 🌐 Live Demo
 
 **Final Outcome:**  
 👉 https://celebrated-gumption-52a5ba.netlify.app/
