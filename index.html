@@ -1,136 +1,190 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Beautiful AI-powered weather forecasts — get current conditions or 5-day forecasts for any city worldwide.">
-    <title>N8Neather — AI Weather</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>SkyCast Pro - Advanced Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: #f8fafc;
+        }
+        
+        /* Animated Mesh Background */
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(210,100%,93%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,100%,92%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(190,100%,91%,1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(210,100%,95%,1) 0, transparent 50%);
+            filter: blur(80px);
+            opacity: 0.8;
+            animation: mesh-breathing 25s ease-in-out infinite alternate;
+        }
+
+        .dark .bg-mesh {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(220,100%,10%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(240,100%,12%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(200,100%,8%,1) 0, transparent 50%);
+            opacity: 0.6;
+        }
+
+        /* Floating Blobs */
+        .blob {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: drift 30s linear infinite;
+        }
+
+        @keyframes drift {
+            from { transform: translate(-10%, -10%) rotate(0deg); }
+            to { transform: translate(110%, 110%) rotate(360deg); }
+        }
+
+        @keyframes mesh-breathing {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.1) translate(2%, 2%); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 40px 80px -20px rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        /* Border Beam Animation */
+        .border-beam {
+            position: relative;
+            overflow: hidden;
+        }
+        .border-beam::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.4), transparent 30%);
+            animation: rotate-beam 4s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        @keyframes rotate-beam {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes weather-float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-25px) rotate(4deg); }
+        }
+        
+        .animate-weather-icon {
+            animation: weather-float 8s ease-in-out infinite;
+        }
+
+        .temp-glow {
+            text-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+        }
+
+        .dark .temp-glow {
+            text-shadow: 0 0 80px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Staggered entry classes */
+        .reveal-item {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes reveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Particle container */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
+    <div class="bg-mesh"></div>
+    <div class="blob" style="top: 10%; left: 10%; animation-delay: -5s;"></div>
+    <div class="blob" style="top: 60%; left: 80%; width: 300px; height: 300px; animation-delay: -15s;"></div>
+    <div class="particles" id="particles"></div>
+    <div id="root"></div>
 
-<body>
-
-    <!-- Animated background -->
-    <canvas id="bgCanvas"></canvas>
-    <div class="aurora"></div>
-
-    <main class="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <svg class="logo-icon" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="8" fill="url(#sunGrad)" />
-                    <path
-                        d="M20 6v4M20 30v4M6 20h4M30 20h4M10.3 10.3l2.8 2.8M26.9 26.9l2.8 2.8M10.3 29.7l2.8-2.8M26.9 13.1l2.8-2.8"
-                        stroke="url(#rayGrad)" stroke-width="2" stroke-linecap="round" />
-                    <path
-                        d="M24 26c4.4 0 8-2.7 8-6s-3.6-6-8-6c-.5-3.3-3.5-6-7-6s-6.5 2.7-7 6c-4.4 0-8 2.7-8 6s3.6 6 8 6h14z"
-                        fill="url(#cloudGrad)" opacity="0.6" />
-                    <defs>
-                        <linearGradient id="sunGrad" x1="12" y1="12" x2="28" y2="28">
-                            <stop stop-color="#FBBF24" />
-                            <stop offset="1" stop-color="#F59E0B" />
-                        </linearGradient>
-                        <linearGradient id="rayGrad" x1="6" y1="6" x2="34" y2="34">
-                            <stop stop-color="#FCD34D" />
-                            <stop offset="1" stop-color="#F59E0B" />
-                        </linearGradient>
-                        <linearGradient id="cloudGrad" x1="2" y1="14" x2="32" y2="26">
-                            <stop stop-color="rgba(255,255,255,0.9)" />
-                            <stop offset="1" stop-color="rgba(200,220,255,0.7)" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <h1>OmniSky</h1>
-            </div>
-            <p class="tagline">AI-Powered Weather Intelligence</p>
-        </header>
-
-        <!-- Main Card -->
-        <section class="card" id="mainCard">
-            <!-- Search -->
-            <div class="search-group">
-                <div class="input-wrapper">
-                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                    </svg>
-                    <input type="text" id="cityInput" placeholder="Search any city..." autocomplete="off"
-                        spellcheck="false" />
-                </div>
-                <button id="searchBtn" aria-label="Get weather">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Toggle -->
-            <div class="toggle-group">
-                <span class="toggle-label active" id="labelToday">Today</span>
-                <label class="toggle-switch" for="forecastToggle">
-                    <input type="checkbox" id="forecastToggle" />
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="toggle-label" id="labelForecast">5-Day Forecast</span>
-            </div>
-
-            <!-- Result area -->
-            <div class="result-area" id="resultArea">
-                <div class="placeholder-state" id="placeholderState">
-                    <svg class="placeholder-icon" viewBox="0 0 80 80" fill="none">
-                        <circle cx="32" cy="32" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
-                        <path
-                            d="M32 18v4M32 42v4M18 32h4M42 32h4M22.2 22.2l2.8 2.8M38.4 38.4l2.8 2.8M22.2 41.8l2.8-2.8M38.4 25.6l2.8-2.8"
-                            stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-linecap="round" />
-                        <path d="M38 48a12 12 0 0 0 12-8 10 10 0 0 0-8-18 14 14 0 0 0-26 4 10 10 0 0 0 2 20h20z"
-                            stroke="rgba(255,255,255,0.12)" stroke-width="2" fill="none" />
-                    </svg>
-                    <p>Enter a city to discover the weather</p>
-                </div>
-
-                <div class="loading-state hidden" id="loadingState">
-                    <div class="loader">
-                        <div class="loader-ring"></div>
-                        <div class="loader-ring"></div>
-                        <div class="loader-ring"></div>
-                    </div>
-                    <p>Fetching weather intelligence...</p>
-                </div>
-
-                <div class="weather-result hidden" id="weatherResult">
-                    <div class="result-header">
-                        <h2 id="resultCity"></h2>
-                        <span class="result-badge" id="resultBadge">Today</span>
-                    </div>
-                    <div class="result-text" id="resultText"></div>
-                </div>
-
-                <div class="error-state hidden" id="errorState">
-                    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4M12 16h.01" />
-                    </svg>
-                    <p id="errorMessage">Something went wrong. Please try again.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>Powered by <strong>n8n</strong> · OpenWeatherMap · Google Gemini</p>
-        </footer>
-    </main>
-
-    <script src="app.js"></script>
+    <script>
+        // Simple particle system
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 20;
+        for (let i = 0; i < particleCount; i++) {
+            const p = document.createElement('div');
+            p.style.position = 'absolute';
+            p.style.width = Math.random() * 4 + 2 + 'px';
+            p.style.height = p.style.width;
+            p.style.background = 'rgba(59, 130, 246, 0.2)';
+            p.style.borderRadius = '50%';
+            p.style.top = Math.random() * 100 + '%';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animation = `drift ${Math.random() * 20 + 20}s linear infinite`;
+            p.style.opacity = Math.random() * 0.5;
+            particlesContainer.appendChild(p);
+        }
+    </script>
+<script type="module" src="/index.tsx"></script>
 </body>
-
 </html>
