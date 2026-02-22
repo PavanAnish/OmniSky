@@ -118,6 +118,8 @@ const WeatherDashboard: React.FC = () => {
 
   const toggleUnit = () => {
     const newUnit = state.unit === 'metric' ? 'imperial' : 'metric';
+    // Update ref immediately so loadWeather uses the correct unit if it relies on it
+    unitRef.current = newUnit;
     setState(prev => ({ ...prev, unit: newUnit }));
     if (state.lat !== undefined && state.lon !== undefined) {
       loadWeather(state.lat, state.lon, state.selectedName, newUnit);
@@ -133,7 +135,7 @@ const WeatherDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-12 transition-colors duration-500 overflow-hidden relative">
+    <div className="min-h-screen pb-12 transition-colors duration-500 relative">
       {/* Background Scanning Animation for "Use Current Location" */}
       {isLocating && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
@@ -148,26 +150,28 @@ const WeatherDashboard: React.FC = () => {
       )}
 
       {/* Header with higher z-index to allow search dropdown to float over main content */}
-      <header className="p-4 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 max-w-7xl mx-auto relative z-40">
+      <header className="p-6 md:p-10 flex flex-col lg:flex-row items-center justify-between gap-8 max-w-7xl mx-auto relative z-40">
         <div className="flex flex-col reveal-item" style={{ animationDelay: '0s' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-blue-500/30 transform hover:scale-110 transition-transform duration-500">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-blue-500/30 transform hover:rotate-6 transition-transform duration-500">
               S
             </div>
-            <h1 className="text-3xl font-[900] tracking-tight text-slate-900 dark:text-white">SkyCast <span className="text-blue-600">Pro</span></h1>
-          </div>
-          {lastUpdated && !state.loading && (
-            <div className="flex items-center gap-2 mt-2 ml-1 text-[11px] uppercase tracking-[0.2em] font-black text-blue-500 dark:text-blue-400">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              Campus Node Connected
+            <div className="flex flex-col">
+              <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">SkyCast <span className="text-blue-600">Pro</span></h1>
+              {lastUpdated && !state.loading && (
+                <div className="flex items-center gap-2 mt-2 text-[10px] uppercase tracking-[0.3em] font-black text-blue-500 dark:text-blue-400">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  System Online
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
         
-        <div className="flex-1 w-full flex justify-center reveal-item" style={{ animationDelay: '0.1s' }}>
+        <div className="flex-1 w-full max-w-2xl flex justify-center reveal-item" style={{ animationDelay: '0.1s' }}>
           <SearchBar 
             onSelect={(s) => loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state)} 
             onUseCurrentLocation={useCurrentLocation}
@@ -175,24 +179,33 @@ const WeatherDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4 reveal-item" style={{ animationDelay: '0.2s' }}>
-          <button 
-            onClick={toggleUnit}
-            className={`p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 font-black text-sm min-w-[56px] hover:border-blue-500 transition-all shadow-sm ${state.loading ? 'opacity-50' : 'hover:scale-110 active:scale-95'}`}
-            disabled={state.loading}
-          >
-            {state.unit === 'metric' ? '°C' : '°F'}
-          </button>
+          <div className="flex p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+            <button 
+              onClick={toggleUnit}
+              className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${state.unit === 'metric' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              disabled={state.loading}
+            >
+              °C
+            </button>
+            <button 
+              onClick={toggleUnit}
+              className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${state.unit === 'imperial' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              disabled={state.loading}
+            >
+              °F
+            </button>
+          </div>
           <button 
             onClick={() => setDarkMode(!darkMode)}
-            className="p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm"
+            className="p-3.5 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm"
           >
-            {darkMode ? <Sun size={24} /> : <Moon size={24} />}
+            {darkMode ? <Sun size={22} /> : <Moon size={22} />}
           </button>
           <button 
             onClick={handleRefresh}
-            className="p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm group"
+            className="p-3.5 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm group"
           >
-            <RefreshCw size={24} className={`${state.loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
+            <RefreshCw size={22} className={`${state.loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
           </button>
         </div>
       </header>
@@ -204,14 +217,19 @@ const WeatherDashboard: React.FC = () => {
           <LoadingSkeleton />
         ) : (
           state.current && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-8 space-y-8">
-                <CurrentWeather data={state.current} unit={state.unit} />
-                <InsightsPanel insight={insight} />
-                <WeatherCharts hourly={state.hourly} unit={state.unit} />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8 space-y-8">
+                  <CurrentWeather data={state.current} unit={state.unit} />
+                  <InsightsPanel insight={insight} />
+                </div>
+                <div className="lg:col-span-4">
+                  <ForecastSection daily={state.daily} unit={state.unit} />
+                </div>
               </div>
-              <div className="lg:col-span-4">
-                <ForecastSection daily={state.daily} unit={state.unit} />
+              
+              <div className="w-full reveal-item" style={{ animationDelay: '0.4s' }}>
+                <WeatherCharts hourly={state.hourly} unit={state.unit} />
               </div>
             </div>
           )

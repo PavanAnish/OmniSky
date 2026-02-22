@@ -6,9 +6,9 @@
 // Replace this with your actual n8n Webhook URL
 export const N8N_WEBHOOK_URL = ""; 
 
-export const DEFAULT_CITY = "Kanjirappally";
-export const DEFAULT_LAT = 9.5540;
-export const DEFAULT_LON = 77.0315;
+export const DEFAULT_CITY = "Kochi";
+export const DEFAULT_LAT = 9.9312;
+export const DEFAULT_LON = 76.2673;
 
 export const WEATHER_ICON_MAP: Record<string, string> = {
   '01d': 'Sun',

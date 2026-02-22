@@ -18,11 +18,11 @@ const ForecastSection: React.FC<ForecastSectionProps> = ({ daily, unit }) => {
         <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/10">
           <Calendar size={22} />
         </div>
-        <h3 className="font-black text-lg uppercase tracking-[0.2em] text-slate-900 dark:text-white">7-Day Outlook</h3>
+        <h3 className="font-black text-lg uppercase tracking-[0.2em] text-slate-900 dark:text-white">5-Day Outlook</h3>
       </div>
 
       <div className="space-y-4">
-        {daily.map((day, idx) => (
+        {daily.slice(0, 5).map((day, idx) => (
           <div 
             key={day.dt} 
             className={`reveal-item flex items-center justify-between p-4 rounded-3xl transition-all duration-500 hover:bg-white dark:hover:bg-white/5 border border-transparent hover:border-blue-500/10 ${idx === 0 ? 'bg-blue-500/10 dark:bg-blue-500/5 border-blue-500/20' : ''}`}

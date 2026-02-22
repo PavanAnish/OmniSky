@@ -112,7 +112,32 @@ export const fetchWeatherByCoords = async (
     }
     return data;
   } catch (e) {
-    // Fallback if n8n fails
-    return MOCK_WEATHER_DATA;
+    // Fallback if n8n fails or in mock mode
+    console.info(`[WEATHER SERVICE] Using mock data for unit: ${unit}`);
+    const data = JSON.parse(JSON.stringify(MOCK_WEATHER_DATA));
+    
+    if (unit === 'imperial') {
+      // Convert Celsius to Fahrenheit: (C * 9/5) + 32
+      const toF = (c: number) => Math.round((c * 9/5) + 32);
+      
+      data.current.temp = toF(data.current.temp);
+      data.current.feelsLike = toF(data.current.feelsLike);
+      
+      data.hourly.forEach((h: any) => {
+        h.temp = toF(h.temp);
+      });
+      
+      data.daily.forEach((d: any) => {
+        d.temp = toF(d.temp);
+        d.minTemp = toF(d.minTemp);
+        d.maxTemp = toF(d.maxTemp);
+      });
+    }
+    
+    const isCollegeCoords = Math.abs(lat - 9.527091) < 0.001 && Math.abs(lon - 76.820919) < 0.001;
+    if (isCollegeCoords) {
+      data.current.originalName = "Divisional block, Amal Jyothi College of Engineering";
+    }
+    return data;
   }
 };
