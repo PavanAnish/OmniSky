@@ -97,7 +97,7 @@ const WeatherDashboard: React.FC = () => {
     setTimeout(() => {
       const collegeLat = 9.527091;
       const collegeLon = 76.820919;
-      const collegeName = "Divisional block, Amal Jyothi College of Engineering";
+      const collegeName = "Amal Jyothi College of Engineering";
 
       logBackendRequest('COLLEGE_LOCATION_ACCESSED', { name: collegeName });
       loadWeather(collegeLat, collegeLon, collegeName);
