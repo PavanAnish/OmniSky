@@ -5,10 +5,10 @@ import { WeatherState, SearchSuggestion } from '../types';
 import { fetchWeatherByCoords, reverseGeocode } from '../services/weatherService';
 import { generateWeatherInsight } from '../services/geminiService';
 import { DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY } from '../constants';
-import { 
-  logBackendRequest, 
-  getCachedWeather, 
-  setCachedWeather, 
+import {
+  logBackendRequest,
+  getCachedWeather,
+  setCachedWeather,
   saveToHistory,
   getSettings,
   saveSettings
@@ -38,7 +38,7 @@ const WeatherDashboard: React.FC = () => {
   const [darkMode, setDarkMode] = useState(initialSettings.darkMode);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  
+
   const unitRef = useRef(state.unit);
   useEffect(() => {
     unitRef.current = state.unit;
@@ -47,16 +47,16 @@ const WeatherDashboard: React.FC = () => {
 
   const loadWeather = useCallback(async (lat: number, lon: number, name?: string, forceUnit?: 'metric' | 'imperial', country?: string, stateLabel?: string) => {
     const activeUnit = forceUnit || unitRef.current;
-    setState(prev => ({ 
-      ...prev, 
-      loading: true, 
-      error: null, 
-      lat, 
-      lon, 
+    setState(prev => ({
+      ...prev,
+      loading: true,
+      error: null,
+      lat,
+      lon,
       selectedName: name || prev.selectedName,
-      unit: activeUnit 
+      unit: activeUnit
     }));
-    
+
     try {
       const cached = getCachedWeather(lat, lon, activeUnit);
       let data;
@@ -78,7 +78,7 @@ const WeatherDashboard: React.FC = () => {
         loading: false
       }));
       setLastUpdated(new Date());
-      
+
       const aiInsight = await generateWeatherInsight(data.current, data.daily);
       setInsight(aiInsight);
     } catch (err: any) {
@@ -95,12 +95,12 @@ const WeatherDashboard: React.FC = () => {
 
     // Simulate a high-tech scan delay for the WOW effect
     setTimeout(() => {
-        const collegeLat = 9.527091;
-        const collegeLon = 76.820919;
-        const collegeName = "Divisional block, Amal Jyothi College of Engineering";
-        
-        logBackendRequest('COLLEGE_LOCATION_ACCESSED', { name: collegeName });
-        loadWeather(collegeLat, collegeLon, collegeName);
+      const collegeLat = 9.527091;
+      const collegeLon = 76.820919;
+      const collegeName = "Divisional block, Amal Jyothi College of Engineering";
+
+      logBackendRequest('COLLEGE_LOCATION_ACCESSED', { name: collegeName });
+      loadWeather(collegeLat, collegeLon, collegeName);
     }, 1200);
   }, [loadWeather]);
 
@@ -139,13 +139,13 @@ const WeatherDashboard: React.FC = () => {
       {/* Background Scanning Animation for "Use Current Location" */}
       {isLocating && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 bg-blue-500/10 backdrop-blur-sm"></div>
-            <div className="w-96 h-96 border-4 border-blue-500 rounded-full animate-ping opacity-20"></div>
-            <div className="w-64 h-64 border-2 border-blue-400 rounded-full animate-pulse opacity-40"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <Zap size={64} className="text-blue-500 animate-bounce mb-4" />
-                <span className="font-black text-blue-600 uppercase tracking-[0.4em] text-sm">Targeting Campus...</span>
-            </div>
+          <div className="absolute inset-0 bg-blue-500/10 backdrop-blur-sm"></div>
+          <div className="w-96 h-96 border-4 border-blue-500 rounded-full animate-ping opacity-20"></div>
+          <div className="w-64 h-64 border-2 border-blue-400 rounded-full animate-pulse opacity-40"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+            <Zap size={64} className="text-blue-500 animate-bounce mb-4" />
+            <span className="font-black text-blue-600 uppercase tracking-[0.4em] text-sm">Targeting Campus...</span>
+          </div>
         </div>
       )}
 
@@ -157,7 +157,7 @@ const WeatherDashboard: React.FC = () => {
               S
             </div>
             <div className="flex flex-col">
-              <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">SkyCast <span className="text-blue-600">Pro</span></h1>
+              <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">OmniSky</h1>
               {lastUpdated && !state.loading && (
                 <div className="flex items-center gap-2 mt-2 text-[10px] uppercase tracking-[0.3em] font-black text-blue-500 dark:text-blue-400">
                   <span className="relative flex h-2 w-2">
@@ -170,24 +170,24 @@ const WeatherDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex-1 w-full max-w-2xl flex justify-center reveal-item" style={{ animationDelay: '0.1s' }}>
-          <SearchBar 
-            onSelect={(s) => loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state)} 
+          <SearchBar
+            onSelect={(s) => loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state)}
             onUseCurrentLocation={useCurrentLocation}
           />
         </div>
 
         <div className="flex items-center gap-4 reveal-item" style={{ animationDelay: '0.2s' }}>
           <div className="flex p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-            <button 
+            <button
               onClick={toggleUnit}
               className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${state.unit === 'metric' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
               disabled={state.loading}
             >
               °C
             </button>
-            <button 
+            <button
               onClick={toggleUnit}
               className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${state.unit === 'imperial' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
               disabled={state.loading}
@@ -195,13 +195,13 @@ const WeatherDashboard: React.FC = () => {
               °F
             </button>
           </div>
-          <button 
+          <button
             onClick={() => setDarkMode(!darkMode)}
             className="p-3.5 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm"
           >
             {darkMode ? <Sun size={22} /> : <Moon size={22} />}
           </button>
-          <button 
+          <button
             onClick={handleRefresh}
             className="p-3.5 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-blue-500 transition-all hover:scale-110 shadow-sm group"
           >
@@ -212,7 +212,7 @@ const WeatherDashboard: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 space-y-8 relative z-10">
         {state.error && <ErrorMessage message={state.error} onRetry={handleRefresh} />}
-        
+
         {state.loading && !isLocating ? (
           <LoadingSkeleton />
         ) : (
@@ -227,7 +227,7 @@ const WeatherDashboard: React.FC = () => {
                   <ForecastSection daily={state.daily} unit={state.unit} />
                 </div>
               </div>
-              
+
               <div className="w-full reveal-item" style={{ animationDelay: '0.4s' }}>
                 <WeatherCharts hourly={state.hourly} unit={state.unit} />
               </div>

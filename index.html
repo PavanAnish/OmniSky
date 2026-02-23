@@ -1,19 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyCast Pro - Advanced Weather Dashboard</title>
+    <title>OmniSky - Advanced Weather Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
             background: #f8fafc;
         }
-        
+
         /* Animated Mesh Background */
         .bg-mesh {
             position: fixed;
@@ -23,11 +24,11 @@
             height: 100%;
             z-index: -2;
             background-color: #f8fafc;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(210,100%,93%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,100%,92%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(190,100%,91%,1) 0, transparent 50%),
-                radial-gradient(at 50% 100%, hsla(210,100%,95%,1) 0, transparent 50%);
+            background-image:
+                radial-gradient(at 0% 0%, hsla(210, 100%, 93%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 100%, 92%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(190, 100%, 91%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(210, 100%, 95%, 1) 0, transparent 50%);
             filter: blur(80px);
             opacity: 0.8;
             animation: mesh-breathing 25s ease-in-out infinite alternate;
@@ -35,10 +36,10 @@
 
         .dark .bg-mesh {
             background-color: #020617;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(220,100%,10%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(240,100%,12%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(200,100%,8%,1) 0, transparent 50%);
+            background-image:
+                radial-gradient(at 0% 0%, hsla(220, 100%, 10%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(240, 100%, 12%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(200, 100%, 8%, 1) 0, transparent 50%);
             opacity: 0.6;
         }
 
@@ -55,13 +56,23 @@
         }
 
         @keyframes drift {
-            from { transform: translate(-10%, -10%) rotate(0deg); }
-            to { transform: translate(110%, 110%) rotate(360deg); }
+            from {
+                transform: translate(-10%, -10%) rotate(0deg);
+            }
+
+            to {
+                transform: translate(110%, 110%) rotate(360deg);
+            }
         }
 
         @keyframes mesh-breathing {
-            0% { transform: scale(1) translate(0, 0); }
-            100% { transform: scale(1.1) translate(2%, 2%); }
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            100% {
+                transform: scale(1.1) translate(2%, 2%);
+            }
         }
 
         .glass-card {
@@ -70,7 +81,7 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
+
         .dark .glass-card {
             background: rgba(15, 23, 42, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -87,6 +98,7 @@
             position: relative;
             overflow: hidden;
         }
+
         .border-beam::after {
             content: "";
             position: absolute;
@@ -99,19 +111,35 @@
             pointer-events: none;
             opacity: 0.5;
         }
+
         @keyframes rotate-beam {
-            100% { transform: rotate(360deg); }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Hide scrollbar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes weather-float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-25px) rotate(4deg); }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes weather-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-25px) rotate(4deg);
+            }
+        }
+
         .animate-weather-icon {
             animation: weather-float 8s ease-in-out infinite;
         }
@@ -132,7 +160,10 @@
         }
 
         @keyframes reveal {
-            to { opacity: 1; transform: translateY(0); }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Particle container */
@@ -146,7 +177,7 @@
             pointer-events: none;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.4",
@@ -158,8 +189,9 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
+
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
     <div class="bg-mesh"></div>
     <div class="blob" style="top: 10%; left: 10%; animation-delay: -5s;"></div>
@@ -185,6 +217,7 @@
             particlesContainer.appendChild(p);
         }
     </script>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

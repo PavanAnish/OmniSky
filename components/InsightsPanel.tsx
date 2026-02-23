@@ -17,7 +17,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ insight }) => {
           <Sparkles size={28} />
         </div>
         <div className="text-center md:text-left flex-1">
-          <h4 className="font-black text-[11px] text-blue-600 dark:text-blue-400 uppercase tracking-[0.25em] mb-2">SkyCast AI Assistant</h4>
+          <h4 className="font-black text-[11px] text-blue-600 dark:text-blue-400 uppercase tracking-[0.25em] mb-2">OmniSky AI Assistant</h4>
           <p className="text-xl font-bold leading-relaxed text-slate-800 dark:text-slate-100 tracking-tight">
             "{insight}"
           </p>

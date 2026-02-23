@@ -4,9 +4,9 @@
  * Mimics production server-side behavior: Logging, Caching, and Persistence.
  */
 
-const CACHE_KEY = 'skycast_weather_cache';
-const HISTORY_KEY = 'skycast_location_history';
-const SETTINGS_KEY = 'skycast_user_settings';
+const CACHE_KEY = 'omnisky_weather_cache';
+const HISTORY_KEY = 'omnisky_location_history';
+const SETTINGS_KEY = 'omnisky_user_settings';
 
 export interface CachedData {
   timestamp: number;
@@ -28,7 +28,7 @@ export const getHistory = () => {
 export const saveToHistory = (name: string, lat: number, lon: number, country?: string, state?: string) => {
   const history = getHistory();
   const newItem = { name, lat, lon, country: country || 'IN', state, timestamp: Date.now() };
-  
+
   // Remove duplicates and keep top 5
   const filtered = history.filter((h: any) => h.name !== name).slice(0, 4);
   localStorage.setItem(HISTORY_KEY, JSON.stringify([newItem, ...filtered]));
