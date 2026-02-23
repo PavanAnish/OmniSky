@@ -60,7 +60,7 @@ export const setCachedWeather = (lat: number, lon: number, unit: string, data: a
 };
 
 export const getSettings = () => {
-  const defaults = { unit: 'metric', darkMode: false };
+  const defaults = { unit: 'metric', darkMode: true };
   return JSON.parse(localStorage.getItem(SETTINGS_KEY) || JSON.stringify(defaults));
 };
 
