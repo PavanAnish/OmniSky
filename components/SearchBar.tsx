@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, X, History, Trash2 } from 'lucide-react';
-import { fetchGeocoding } from '../services/weatherService';
+import { Search, MapPin, X, History, Trash2, ArrowRight, Calendar, Sun } from 'lucide-react';
+import { fetchGeocoding, callN8nWebhook } from '../services/weatherService';
 import { getHistory, clearHistory } from '../services/backendSimulator';
 import { SearchSuggestion } from '../types';
 
 interface SearchBarProps {
-  onSelect: (suggestion: SearchSuggestion) => void;
+  onSelect: (suggestion: SearchSuggestion, forecastMode: 'today' | '5day') => void;
   onUseCurrentLocation: () => void;
 }
 
@@ -15,6 +15,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSelect, onUseCurrentLocation })
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [history, setHistory] = useState<SearchSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [forecastMode, setForecastMode] = useState<'today' | '5day'>('today');
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load history on mount and when query changes (to show history if query is empty)
@@ -56,40 +57,107 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSelect, onUseCurrentLocation })
     setHistory([]);
   };
 
+  // Submit: pick first suggestion or search by name
+  const handleSubmit = () => {
+    if (suggestions.length > 0) {
+      onSelect(suggestions[0], forecastMode);
+      setQuery('');
+      setIsOpen(false);
+    } else if (query.trim().length > 0) {
+      // Direct search by name — create a suggestion with the query
+      const directSuggestion: SearchSuggestion = {
+        name: query.trim(),
+        lat: 0,
+        lon: 0,
+        country: '',
+      };
+      onSelect(directSuggestion, forecastMode);
+      setQuery('');
+      setIsOpen(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
-    <div className="relative w-full max-w-lg mx-auto" ref={containerRef}>
-      <div className="relative flex items-center">
-        <div className="absolute left-4 text-slate-400">
-          <Search size={18} />
-        </div>
-        <input
-          type="text"
-          value={query}
-          onFocus={() => setIsOpen(true)}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search town (e.g. Kanjirappally)..."
-          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all text-lg"
-        />
-        {query && (
-          <button 
-            onClick={() => { setQuery(''); setSuggestions([]); }}
-            className="absolute right-12 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+    <div className="relative w-full max-w-xl mx-auto" ref={containerRef}>
+      {/* Forecast Mode Toggle */}
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <div className="flex p-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+          <button
+            onClick={() => setForecastMode('today')}
+            className={`px-4 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${forecastMode === 'today'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
           >
-            <X size={18} />
+            <Sun size={14} />
+            Today
           </button>
-        )}
+          <button
+            onClick={() => setForecastMode('5day')}
+            className={`px-4 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${forecastMode === '5day'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+          >
+            <Calendar size={14} />
+            5-Day
+          </button>
+        </div>
+      </div>
+
+      {/* Search Input + Submit Button */}
+      <div className="relative flex items-center gap-2">
+        <div className="relative flex-1 flex items-center">
+          <div className="absolute left-4 text-slate-400">
+            <Search size={18} />
+          </div>
+          <input
+            type="text"
+            value={query}
+            onFocus={() => setIsOpen(true)}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search city (e.g. Kochi, Mumbai)..."
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all text-lg"
+          />
+          {query && (
+            <button
+              onClick={() => { setQuery(''); setSuggestions([]); }}
+              className="absolute right-12 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X size={18} />
+            </button>
+          )}
+          <button
+            onClick={() => { onUseCurrentLocation(); setIsOpen(false); }}
+            className="absolute right-4 text-blue-500 hover:text-blue-600 transition-colors"
+            title="Use my location"
+          >
+            <MapPin size={20} />
+          </button>
+        </div>
+
+        {/* Enter / Submit Button */}
         <button
-          onClick={() => { onUseCurrentLocation(); setIsOpen(false); }}
-          className="absolute right-4 text-blue-500 hover:text-blue-600 transition-colors"
-          title="Use my location"
+          onClick={handleSubmit}
+          disabled={query.trim().length === 0 && suggestions.length === 0}
+          className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+          title={`Get ${forecastMode === 'today' ? "today's" : '5-day'} weather`}
         >
-          <MapPin size={20} />
+          <ArrowRight size={22} />
         </button>
       </div>
 
       {isOpen && (
         <div className="absolute top-full mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto no-scrollbar">
-          
+
           {/* Suggestions List */}
           {suggestions.length > 0 && (
             <div>
@@ -97,7 +165,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSelect, onUseCurrentLocation })
                 <button
                   key={`suggestion-${s.lat}-${s.lon}-${idx}`}
                   onClick={() => {
-                    onSelect(s);
+                    onSelect(s, forecastMode);
                     setQuery('');
                     setIsOpen(false);
                   }}
@@ -121,7 +189,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSelect, onUseCurrentLocation })
                   <History size={14} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Recent Searches</span>
                 </div>
-                <button 
+                <button
                   onClick={handleClearHistory}
                   className="text-[10px] font-bold text-slate-400 hover:text-red-500 flex items-center gap-1 uppercase tracking-widest"
                 >
@@ -133,7 +201,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSelect, onUseCurrentLocation })
                 <button
                   key={`history-${h.lat}-${h.lon}-${idx}`}
                   onClick={() => {
-                    onSelect(h);
+                    onSelect(h, forecastMode);
                     setQuery('');
                     setIsOpen(false);
                   }}

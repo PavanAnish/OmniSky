@@ -35,6 +35,7 @@ const WeatherDashboard: React.FC = () => {
     selectedName: DEFAULT_CITY
   });
   const [insight, setInsight] = useState<string>('');
+  const [forecastMode, setForecastMode] = useState<'today' | '5day'>('today');
   const [darkMode, setDarkMode] = useState(initialSettings.darkMode);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -45,7 +46,8 @@ const WeatherDashboard: React.FC = () => {
     saveSettings({ unit: state.unit, darkMode });
   }, [state.unit, darkMode]);
 
-  const loadWeather = useCallback(async (lat: number, lon: number, name?: string, forceUnit?: 'metric' | 'imperial', country?: string, stateLabel?: string) => {
+  const loadWeather = useCallback(async (lat: number, lon: number, name?: string, forceUnit?: 'metric' | 'imperial', country?: string, stateLabel?: string, mode?: 'today' | '5day') => {
+    const activeMode = mode || forecastMode;
     const activeUnit = forceUnit || unitRef.current;
     setState(prev => ({
       ...prev,
@@ -79,7 +81,7 @@ const WeatherDashboard: React.FC = () => {
       }));
       setLastUpdated(new Date());
 
-      const aiInsight = await generateWeatherInsight(data.current, data.daily);
+      const aiInsight = await generateWeatherInsight(data.current, data.daily, activeMode);
       setInsight(aiInsight);
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message, loading: false }));
@@ -173,7 +175,10 @@ const WeatherDashboard: React.FC = () => {
 
         <div className="flex-1 w-full max-w-2xl flex justify-center reveal-item" style={{ animationDelay: '0.1s' }}>
           <SearchBar
-            onSelect={(s) => loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state)}
+            onSelect={(s, mode) => {
+              setForecastMode(mode);
+              loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state, mode);
+            }}
             onUseCurrentLocation={useCurrentLocation}
           />
         </div>

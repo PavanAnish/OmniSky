@@ -1,5 +1,5 @@
 
-import { N8N_WEBHOOK_URL } from "../constants";
+import { callN8nWebhook } from "./weatherService";
 import { WeatherData, ForecastItem } from "../types";
 
 const MOCK_INSIGHTS = [
@@ -9,26 +9,31 @@ const MOCK_INSIGHTS = [
   "Humidity is slightly high, giving the campus a lush, tropical feel. Stay hydrated!"
 ];
 
-export const generateWeatherInsight = async (current: WeatherData, daily: ForecastItem[]): Promise<string> => {
-  // If no n8n configured, pick a random mock insight to keep the UI alive
-  if (!N8N_WEBHOOK_URL) {
-    return MOCK_INSIGHTS[Math.floor(Math.random() * MOCK_INSIGHTS.length)];
-  }
+/**
+ * Fetch AI-generated weather insight from the n8n webhook.
+ * The n8n workflow has two branches:
+ *   - "today" mode: sends "CityName today" → gets current weather AI text
+ *   - "5day" mode: sends "CityName" → gets 5-day forecast AI text
+ */
+export const generateWeatherInsight = async (
+  current: WeatherData,
+  daily: ForecastItem[],
+  forecastMode: 'today' | '5day' = 'today'
+): Promise<string> => {
+  const cityName = current.originalName || current.city;
+  const isToday = forecastMode === 'today';
 
   try {
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'get_insight', 
-        weatherData: { current, daily } 
-      })
-    });
+    const n8nResponse = await callN8nWebhook(cityName, isToday);
 
-    if (!response.ok) throw new Error("n8n Insight failure");
-    const data = await response.json();
-    return data.insight || MOCK_INSIGHTS[0];
+    if (n8nResponse) {
+      console.info(`[INSIGHT] Got ${forecastMode} AI insight from n8n for "${cityName}"`);
+      return n8nResponse;
+    }
   } catch (error) {
-    return MOCK_INSIGHTS[0];
+    console.warn('[INSIGHT] n8n call failed, using fallback:', error);
   }
+
+  // Fallback to mock insights if n8n is unavailable
+  return MOCK_INSIGHTS[Math.floor(Math.random() * MOCK_INSIGHTS.length)];
 };
