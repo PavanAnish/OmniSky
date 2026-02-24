@@ -1,14 +1,41 @@
 
 import { N8N_WEBHOOK_URL } from '../constants';
-import { SearchSuggestion } from '../types';
+import { WeatherData, ForecastItem, SearchSuggestion } from '../types';
 
 /**
- * Mock data for design preview when no backend is connected
+ * Combined response from the n8n webhook (after Merge nodes)
+ */
+export interface N8nWeatherResponse {
+  aiText: string;
+  type: 'today' | '5day';
+  weatherData: {
+    city: string;
+    country: string;
+    temp: number;
+    feelsLike: number;
+    tempMin: number;
+    tempMax: number;
+    humidity: number;
+    pressure: number;
+    visibility: number;
+    windSpeed: number;
+    windDeg: number;
+    description: string;
+    icon: string;
+    timestamp: number;
+    sunrise: number;
+    sunset: number;
+  };
+  daily?: ForecastItem[];
+  hourly?: ForecastItem[];
+}
+
+/**
+ * Mock data for fallback when n8n is unavailable
  */
 const MOCK_WEATHER_DATA = {
   current: {
-    city: "Kanjirappally",
-    originalName: "Divisional block, Amal Jyothi College of Engineering",
+    city: "Kochi",
     country: "IN",
     temp: 28,
     feelsLike: 31,
@@ -45,39 +72,64 @@ const MOCK_WEATHER_DATA = {
 };
 
 /**
- * Call the n8n webhook with a city name as a GET query parameter.
- * The n8n workflow expects: ?city=CityName
- * For today's weather, append "today": ?city=CityName today
+ * Call the n8n webhook and get the combined response (AI text + weather data).
+ * Sends GET with ?city=CityName (or ?city=CityName today)
  */
-export const callN8nWebhook = async (cityName: string, isToday: boolean = true): Promise<string | null> => {
+export const fetchFromN8n = async (
+  cityName: string,
+  forecastMode: 'today' | '5day' = 'today'
+): Promise<N8nWeatherResponse | null> => {
   if (!N8N_WEBHOOK_URL) {
-    console.info('[N8N] No webhook URL configured, skipping n8n call.');
+    console.info('[N8N] No webhook URL configured.');
     return null;
   }
 
-  const cityQuery = isToday ? `${cityName} today` : cityName;
+  const cityQuery = forecastMode === 'today' ? `${cityName} today` : cityName;
   const url = `${N8N_WEBHOOK_URL}?city=${encodeURIComponent(cityQuery)}`;
 
   try {
-    console.info(`[N8N] Calling webhook: ${url}`);
+    console.info(`[N8N] Fetching ${forecastMode} weather for "${cityName}": ${url}`);
     const response = await fetch(url, { method: 'GET' });
 
     if (!response.ok) {
-      console.warn(`[N8N] Webhook returned ${response.status}: ${response.statusText}`);
+      console.warn(`[N8N] Webhook returned ${response.status}`);
       return null;
     }
 
     const data = await response.json();
-    // The n8n AI Agent returns text in the "output" field
-    if (typeof data === 'string') return data;
-    if (data?.output) return data.output;
-    if (data?.text) return data.text;
-    // If it's an array (n8n sometimes wraps in array), get first item
+
+    // Handle the combined response from our Merge Code nodes
+    if (data?.weatherData && data?.aiText !== undefined) {
+      console.info('[N8N] Got combined response (AI text + weather data)');
+      return data as N8nWeatherResponse;
+    }
+
+    // Handle old format (just AI text) — wrap it
+    if (data?.output || data?.text || typeof data === 'string') {
+      const text = typeof data === 'string' ? data : (data.output || data.text || '');
+      console.info('[N8N] Got text-only response (old format)');
+      return {
+        aiText: text,
+        type: forecastMode,
+        weatherData: MOCK_WEATHER_DATA.current as any
+      };
+    }
+
+    // Array response from n8n
     if (Array.isArray(data) && data.length > 0) {
       const item = data[0];
-      return item?.output || item?.text || JSON.stringify(item);
+      if (item?.weatherData && item?.aiText !== undefined) {
+        return item as N8nWeatherResponse;
+      }
+      return {
+        aiText: item?.output || item?.text || JSON.stringify(item),
+        type: forecastMode,
+        weatherData: MOCK_WEATHER_DATA.current as any
+      };
     }
-    return JSON.stringify(data);
+
+    console.warn('[N8N] Unexpected response format:', data);
+    return null;
   } catch (error) {
     console.warn('[N8N] Webhook call failed:', error);
     return null;
@@ -85,24 +137,119 @@ export const callN8nWebhook = async (cityName: string, isToday: boolean = true):
 };
 
 /**
- * Geocoding — uses local logic for known locations, otherwise returns empty
- * (n8n workflow doesn't support geocoding, so we keep local logic)
+ * Map n8n weather data to frontend WeatherData type
+ */
+const mapToWeatherData = (raw: N8nWeatherResponse['weatherData'], overrideName?: string): WeatherData => ({
+  city: overrideName || raw.city || 'Unknown',
+  originalName: overrideName,
+  country: raw.country || '',
+  temp: Math.round(raw.temp ?? 0),
+  feelsLike: Math.round(raw.feelsLike ?? 0),
+  humidity: raw.humidity ?? 0,
+  windSpeed: raw.windSpeed ?? 0,
+  windDeg: raw.windDeg ?? 0,
+  pressure: raw.pressure ?? 0,
+  visibility: raw.visibility ?? 10000,
+  description: raw.description || '',
+  icon: raw.icon || '01d',
+  timestamp: raw.timestamp || Math.floor(Date.now() / 1000),
+  sunrise: raw.sunrise || Math.floor(Date.now() / 1000) - 10000,
+  sunset: raw.sunset || Math.floor(Date.now() / 1000) + 20000,
+});
+
+/**
+ * Fetch weather data — calls n8n, falls back to mock data
+ */
+export const fetchWeatherByCity = async (
+  cityName: string,
+  forecastMode: 'today' | '5day' = 'today',
+  unit: 'metric' | 'imperial' = 'metric'
+): Promise<{ current: WeatherData; hourly: ForecastItem[]; daily: ForecastItem[]; aiText: string }> => {
+  const n8nResult = await fetchFromN8n(cityName, forecastMode);
+
+  if (n8nResult && n8nResult.weatherData) {
+    const current = mapToWeatherData(n8nResult.weatherData, cityName);
+
+    // Use real daily/hourly if available (5-day mode), else generate from current
+    let daily = n8nResult.daily || [];
+    let hourly = n8nResult.hourly || [];
+
+    // If today mode, generate hourly/daily from the current data
+    if (daily.length === 0) {
+      daily = Array.from({ length: 7 }, (_, i) => ({
+        dt: (current.timestamp || Math.floor(Date.now() / 1000)) + (i * 86400),
+        temp: current.temp,
+        minTemp: Math.round((n8nResult.weatherData.tempMin ?? current.temp - 3)),
+        maxTemp: Math.round((n8nResult.weatherData.tempMax ?? current.temp + 3)),
+        description: current.description,
+        icon: current.icon,
+        rainProb: 0,
+        humidity: current.humidity
+      }));
+    }
+
+    if (hourly.length === 0) {
+      hourly = Array.from({ length: 24 }, (_, i) => ({
+        dt: (current.timestamp || Math.floor(Date.now() / 1000)) + (i * 3600),
+        temp: current.temp + Math.sin(i / 4) * 3,
+        description: current.description,
+        icon: current.icon,
+        rainProb: 0,
+        humidity: current.humidity
+      }));
+    }
+
+    // Handle unit conversion for imperial
+    if (unit === 'imperial') {
+      const toF = (c: number) => Math.round((c * 9 / 5) + 32);
+      current.temp = toF(current.temp);
+      current.feelsLike = toF(current.feelsLike);
+      hourly = hourly.map(h => ({ ...h, temp: toF(h.temp) }));
+      daily = daily.map(d => ({
+        ...d,
+        temp: toF(d.temp),
+        minTemp: toF(d.minTemp),
+        maxTemp: toF(d.maxTemp)
+      }));
+    }
+
+    return { current, hourly, daily, aiText: n8nResult.aiText || '' };
+  }
+
+  // Fallback to mock data
+  console.info('[WEATHER] Using mock data (n8n unavailable)');
+  const data = JSON.parse(JSON.stringify(MOCK_WEATHER_DATA));
+  data.current.city = cityName;
+  data.current.originalName = cityName;
+
+  if (unit === 'imperial') {
+    const toF = (c: number) => Math.round((c * 9 / 5) + 32);
+    data.current.temp = toF(data.current.temp);
+    data.current.feelsLike = toF(data.current.feelsLike);
+    data.hourly.forEach((h: any) => { h.temp = toF(h.temp); });
+    data.daily.forEach((d: any) => {
+      d.temp = toF(d.temp);
+      d.minTemp = toF(d.minTemp);
+      d.maxTemp = toF(d.maxTemp);
+    });
+  }
+
+  return { current: data.current, hourly: data.hourly, daily: data.daily, aiText: '' };
+};
+
+/**
+ * Geocoding — local lookup for known cities
  */
 export const fetchGeocoding = async (query: string): Promise<SearchSuggestion[]> => {
   const q = query.toLowerCase().trim();
 
-  // High-priority local logic for the campus location
   if (q.includes('kanjirappally') || q.includes('amal jyothi')) {
     return [{
-      name: "Divisional block, Amal Jyothi College of Engineering",
-      lat: 9.527091,
-      lon: 76.820919,
-      country: "IN",
-      state: "Kerala"
+      name: "Amal Jyothi College of Engineering",
+      lat: 9.527091, lon: 76.820919, country: "IN", state: "Kerala"
     }];
   }
 
-  // Basic geocoding for common Indian cities (n8n doesn't have a geocoding endpoint)
   const KNOWN_CITIES: Record<string, SearchSuggestion> = {
     'kochi': { name: 'Kochi', lat: 9.9312, lon: 76.2673, country: 'IN', state: 'Kerala' },
     'ernakulam': { name: 'Ernakulam', lat: 9.9816, lon: 76.2999, country: 'IN', state: 'Kerala' },
@@ -140,47 +287,12 @@ export const fetchGeocoding = async (query: string): Promise<SearchSuggestion[]>
 
 export const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
   const isCollege = Math.abs(lat - 9.527091) < 0.001 && Math.abs(lon - 76.820919) < 0.001;
-  if (isCollege) return "Divisional block, Amal Jyothi College of Engineering";
+  if (isCollege) return "Amal Jyothi College of Engineering";
   return "Your Location";
 };
 
-export const fetchWeatherByCoords = async (
-  lat: number,
-  lon: number,
-  unit: 'metric' | 'imperial' = 'metric',
-  overrideName?: string
-) => {
-  // Use mock data for structured UI (charts, temp cards, forecasts)
-  // The n8n webhook returns AI text, not structured JSON
-  console.info(`[WEATHER SERVICE] Using local data for structured UI (unit: ${unit})`);
-  const data = JSON.parse(JSON.stringify(MOCK_WEATHER_DATA));
-
-  // Override city name if provided
-  if (overrideName) {
-    data.current.city = overrideName;
-    data.current.originalName = overrideName;
-  }
-
-  if (unit === 'imperial') {
-    const toF = (c: number) => Math.round((c * 9 / 5) + 32);
-
-    data.current.temp = toF(data.current.temp);
-    data.current.feelsLike = toF(data.current.feelsLike);
-
-    data.hourly.forEach((h: any) => {
-      h.temp = toF(h.temp);
-    });
-
-    data.daily.forEach((d: any) => {
-      d.temp = toF(d.temp);
-      d.minTemp = toF(d.minTemp);
-      d.maxTemp = toF(d.maxTemp);
-    });
-  }
-
-  const isCollegeCoords = Math.abs(lat - 9.527091) < 0.001 && Math.abs(lon - 76.820919) < 0.001;
-  if (isCollegeCoords) {
-    data.current.originalName = "Divisional block, Amal Jyothi College of Engineering";
-  }
-  return data;
+// Keep backward compatibility
+export const callN8nWebhook = async (cityName: string, isToday: boolean = true): Promise<string | null> => {
+  const result = await fetchFromN8n(cityName, isToday ? 'today' : '5day');
+  return result?.aiText || null;
 };

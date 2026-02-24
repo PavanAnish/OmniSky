@@ -207,6 +207,32 @@
           "name": "Groq account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || $input.first().json.text || '';\nconst w = $('Today').first().json;\n\nreturn [{\n  json: {\n    aiText: aiOutput,\n    type: 'today',\n    weatherData: {\n      city: w.name || '',\n      country: (w.sys && w.sys.country) || '',\n      temp: w.main && w.main.temp,\n      feelsLike: w.main && w.main.feels_like,\n      tempMin: w.main && w.main.temp_min,\n      tempMax: w.main && w.main.temp_max,\n      humidity: w.main && w.main.humidity,\n      pressure: w.main && w.main.pressure,\n      visibility: w.visibility,\n      windSpeed: w.wind && w.wind.speed,\n      windDeg: w.wind && w.wind.deg,\n      description: (w.weather && w.weather[0] && w.weather[0].description) || '',\n      icon: (w.weather && w.weather[0] && w.weather[0].icon) || '01d',\n      timestamp: w.dt,\n      sunrise: w.sys && w.sys.sunrise,\n      sunset: w.sys && w.sys.sunset\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        -40
+      ],
+      "id": "a1b2c3d4-merge-today-0001",
+      "name": "Merge Today"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || $input.first().json.text || '';\nconst f = $('OpenWeatherMap').first().json;\nconst list = f.list || [];\nconst city = f.city || {};\nconst cur = list[0] || {};\n\nconst weatherData = {\n  city: city.name || '',\n  country: city.country || '',\n  temp: cur.main && cur.main.temp,\n  feelsLike: cur.main && cur.main.feels_like,\n  tempMin: cur.main && cur.main.temp_min,\n  tempMax: cur.main && cur.main.temp_max,\n  humidity: cur.main && cur.main.humidity,\n  pressure: cur.main && cur.main.pressure,\n  visibility: cur.visibility || 10000,\n  windSpeed: cur.wind && cur.wind.speed,\n  windDeg: cur.wind && cur.wind.deg,\n  description: (cur.weather && cur.weather[0] && cur.weather[0].description) || '',\n  icon: (cur.weather && cur.weather[0] && cur.weather[0].icon) || '01d',\n  timestamp: cur.dt,\n  sunrise: city.sunrise,\n  sunset: city.sunset\n};\n\nconst daily = [];\nfor (let i = 0; i < list.length && daily.length < 5; i += 8) {\n  const item = list[i];\n  if (item) {\n    daily.push({\n      dt: item.dt,\n      temp: item.main && item.main.temp,\n      minTemp: item.main && item.main.temp_min,\n      maxTemp: item.main && item.main.temp_max,\n      description: (item.weather && item.weather[0] && item.weather[0].description) || '',\n      icon: (item.weather && item.weather[0] && item.weather[0].icon) || '01d',\n      humidity: item.main && item.main.humidity,\n      rainProb: item.pop ? Math.round(item.pop * 100) : 0\n    });\n  }\n}\n\nconst hourly = list.slice(0, 8).map(item => ({\n  dt: item.dt,\n  temp: item.main && item.main.temp,\n  description: (item.weather && item.weather[0] && item.weather[0].description) || '',\n  icon: (item.weather && item.weather[0] && item.weather[0].icon) || '01d',\n  humidity: item.main && item.main.humidity,\n  rainProb: item.pop ? Math.round(item.pop * 100) : 0\n}));\n\nreturn [{\n  json: {\n    aiText: aiOutput,\n    type: '5day',\n    weatherData: weatherData,\n    daily: daily,\n    hourly: hourly\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        636,
+        240
+      ],
+      "id": "a1b2c3d4-merge-forecast-0002",
+      "name": "Merge Forecast"
     }
   ],
   "pinData": {},
@@ -223,6 +249,17 @@
       ]
     },
     "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Today": {
       "main": [
         [
           {
@@ -285,6 +322,17 @@
       ]
     },
     "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Merge Forecast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Forecast": {
       "main": [
         [
           {

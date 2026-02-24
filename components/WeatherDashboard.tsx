@@ -2,8 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sun, Moon, RefreshCw, Radio, MapPin, Zap } from 'lucide-react';
 import { WeatherState, SearchSuggestion } from '../types';
-import { fetchWeatherByCoords, reverseGeocode } from '../services/weatherService';
-import { generateWeatherInsight } from '../services/geminiService';
+import { fetchWeatherByCity } from '../services/weatherService';
 import { DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY } from '../constants';
 import {
   logBackendRequest,
@@ -46,43 +45,40 @@ const WeatherDashboard: React.FC = () => {
     saveSettings({ unit: state.unit, darkMode });
   }, [state.unit, darkMode]);
 
-  const loadWeather = useCallback(async (lat: number, lon: number, name?: string, forceUnit?: 'metric' | 'imperial', country?: string, stateLabel?: string, mode?: 'today' | '5day') => {
-    const activeMode = mode || forecastMode;
+  /**
+   * Load weather by city name — calls n8n webhook directly
+   */
+  const loadWeatherByName = useCallback(async (
+    cityName: string,
+    mode: 'today' | '5day' = 'today',
+    forceUnit?: 'metric' | 'imperial',
+    country?: string,
+    stateLabel?: string
+  ) => {
     const activeUnit = forceUnit || unitRef.current;
     setState(prev => ({
       ...prev,
       loading: true,
       error: null,
-      lat,
-      lon,
-      selectedName: name || prev.selectedName,
+      selectedName: cityName,
       unit: activeUnit
     }));
 
     try {
-      const cached = getCachedWeather(lat, lon, activeUnit);
-      let data;
+      console.info(`[DASHBOARD] Loading weather for "${cityName}" (${mode}, ${activeUnit})`);
+      const result = await fetchWeatherByCity(cityName, mode, activeUnit);
 
-      if (cached) {
-        data = cached.data;
-      } else {
-        data = await fetchWeatherByCoords(lat, lon, activeUnit, name);
-        setCachedWeather(lat, lon, activeUnit, data);
-      }
-
-      if (name) saveToHistory(name, lat, lon, country, stateLabel);
+      saveToHistory(cityName, 0, 0, country, stateLabel);
 
       setState(prev => ({
         ...prev,
-        current: data.current,
-        hourly: data.hourly,
-        daily: data.daily,
+        current: result.current,
+        hourly: result.hourly,
+        daily: result.daily,
         loading: false
       }));
       setLastUpdated(new Date());
-
-      const aiInsight = await generateWeatherInsight(data.current, data.daily, activeMode);
-      setInsight(aiInsight);
+      setInsight(result.aiText || '');
     } catch (err: any) {
       setState(prev => ({ ...prev, error: err.message, loading: false }));
     } finally {
@@ -90,24 +86,19 @@ const WeatherDashboard: React.FC = () => {
     }
   }, []);
 
-  // NEW: Optimized for Amal Jyothi College of Engineering
   const useCurrentLocation = useCallback(() => {
     setIsLocating(true);
     setState(prev => ({ ...prev, loading: true, error: null }));
 
-    // Simulate a high-tech scan delay for the WOW effect
     setTimeout(() => {
-      const collegeLat = 9.527091;
-      const collegeLon = 76.820919;
       const collegeName = "Amal Jyothi College of Engineering";
-
       logBackendRequest('COLLEGE_LOCATION_ACCESSED', { name: collegeName });
-      loadWeather(collegeLat, collegeLon, collegeName);
+      loadWeatherByName(collegeName, forecastMode);
     }, 1200);
-  }, [loadWeather]);
+  }, [loadWeatherByName, forecastMode]);
 
   useEffect(() => {
-    loadWeather(DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY);
+    loadWeatherByName(DEFAULT_CITY, 'today');
   }, []);
 
   useEffect(() => {
@@ -120,17 +111,16 @@ const WeatherDashboard: React.FC = () => {
 
   const toggleUnit = () => {
     const newUnit = state.unit === 'metric' ? 'imperial' : 'metric';
-    // Update ref immediately so loadWeather uses the correct unit if it relies on it
     unitRef.current = newUnit;
     setState(prev => ({ ...prev, unit: newUnit }));
-    if (state.lat !== undefined && state.lon !== undefined) {
-      loadWeather(state.lat, state.lon, state.selectedName, newUnit);
+    if (state.selectedName) {
+      loadWeatherByName(state.selectedName, forecastMode, newUnit);
     }
   };
 
   const handleRefresh = () => {
-    if (state.lat !== undefined && state.lon !== undefined) {
-      loadWeather(state.lat, state.lon, state.selectedName);
+    if (state.selectedName) {
+      loadWeatherByName(state.selectedName, forecastMode);
     } else {
       useCurrentLocation();
     }
@@ -151,7 +141,7 @@ const WeatherDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Header with higher z-index to allow search dropdown to float over main content */}
+      {/* Header */}
       <header className="p-6 md:p-10 flex flex-col lg:flex-row items-center justify-between gap-8 max-w-7xl mx-auto relative z-40">
         <div className="flex flex-col reveal-item" style={{ animationDelay: '0s' }}>
           <div className="flex items-center gap-4">
@@ -177,7 +167,7 @@ const WeatherDashboard: React.FC = () => {
           <SearchBar
             onSelect={(s, mode) => {
               setForecastMode(mode);
-              loadWeather(s.lat, s.lon, s.name, undefined, s.country, s.state, mode);
+              loadWeatherByName(s.name, mode, undefined, s.country, s.state);
             }}
             onUseCurrentLocation={useCurrentLocation}
           />
