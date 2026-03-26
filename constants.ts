@@ -4,7 +4,7 @@
  */
 
 // Replace this with your actual n8n Webhook URL
-export const N8N_WEBHOOK_URL = "http://localhost:5678/webhook-test/77d72b8e-eecc-4fa6-b281-bfacfe0cd56d";
+export const N8N_WEBHOOK_URL = "http://localhost:5678/webhook-test/weather";
 
 export const DEFAULT_CITY = "Kochi";
 export const DEFAULT_LAT = 9.9312;
